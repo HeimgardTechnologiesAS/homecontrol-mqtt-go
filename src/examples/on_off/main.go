@@ -33,13 +33,11 @@ func main() {
 		os.Exit(1)
 	}()
 
-	mqttDevice := devices.NewMqttDevice("192.168.8.1", 1883, "ttdev123", "hc", "admin", false)
+	mqttDevice := devices.NewMqttDevice("192.168.8.1", "ttdev1234", "hc", "admin", false)
 
 	ep1 := endpoints.NewOnOffEndpoint("ep1", ep1StateChange)
-	ep2 := endpoints.NewOnOffEndpoint("ep2", ep1StateChange)
 
 	mqttDevice.AddEndpoint(ep1)
-	mqttDevice.AddEndpoint(ep2)
 
 	mqttDevice.Connect()
 	defer mqttDevice.Disconnect()

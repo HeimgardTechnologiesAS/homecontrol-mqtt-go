@@ -1,13 +1,22 @@
 package devices
 
 import (
+	"crypto/tls"
+	"crypto/x509"
 	"errors"
 	"fmt"
 	"homecontrol-mqtt-go/internal/pkg/endpoints"
+	"log"
+	"net"
 	"strings"
 	"time"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
+)
+
+const (
+	TLS_PORT = 8883
+	TCP_PORT = 1883
 )
 
 type MqttDevice struct {
@@ -37,7 +46,7 @@ func parseCommand(token string) string {
 	return ""
 }
 
-func NewMqttDevice(hostname string, port int, uid string, username string, password string, isSecure bool) *MqttDevice {
+func NewMqttDevice(hostname string, uid string, username string, password string, isSecure bool) *MqttDevice {
 
 	device := &MqttDevice{
 		uid:       uid,
@@ -45,7 +54,12 @@ func NewMqttDevice(hostname string, port int, uid string, username string, passw
 	}
 
 	opts := mqtt.NewClientOptions()
-	opts.AddBroker(fmt.Sprintf("tcp://%s:%d", hostname, port))
+
+	if isSecure {
+		opts.AddBroker(fmt.Sprintf("ssl://%s:%d", hostname, TLS_PORT))
+	} else {
+		opts.AddBroker(fmt.Sprintf("tcp://%s:%d", hostname, TCP_PORT))
+	}
 	opts.SetClientID(uid)
 	opts.SetUsername(username)
 	opts.SetPassword(password)
@@ -55,9 +69,8 @@ func NewMqttDevice(hostname string, port int, uid string, username string, passw
 	opts.OnConnectionLost = device.connectionLostHandler
 
 	if isSecure {
-		// tlsConfig := NewTlsConfig()
-		// opts.SetTLSConfig(tlsConfig)
-		// TODO:
+		tlsConfig := NewTlsConfig(hostname)
+		opts.SetTLSConfig(tlsConfig)
 	}
 
 	device.client = mqtt.NewClient(opts)
@@ -66,8 +79,34 @@ func NewMqttDevice(hostname string, port int, uid string, username string, passw
 
 }
 
+func NewTlsConfig(hostname string) *tls.Config {
+
+	conn, err := net.Dial("tcp", fmt.Sprintf("%s:%d", hostname, TLS_PORT))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	client := tls.Client(conn, &tls.Config{
+		InsecureSkipVerify: true,
+	})
+	defer client.Close()
+
+	if err := client.Handshake(); err != nil {
+		log.Fatal(err)
+	}
+
+	cert := client.ConnectionState().PeerCertificates[0]
+
+	certpool := x509.NewCertPool()
+	certpool.AddCert(cert)
+	return &tls.Config{
+		RootCAs:            certpool,
+		MaxVersion:         tls.VersionTLS12,
+		InsecureSkipVerify: true,
+	}
+}
+
 func (obj *MqttDevice) Connect() error {
-	// obj.epZero = endpoints.NewZeroEndpoint(obj.uid, "0", obj.SendConfigs, obj.sendMsg)
 
 	fmt.Print("Connecting\n")
 	if obj.client == nil {
@@ -75,7 +114,11 @@ func (obj *MqttDevice) Connect() error {
 		return errors.New("client is nil")
 	}
 
-	if token := obj.client.Connect(); token.Wait() && token.Error() != nil {
+	token := obj.client.Connect()
+	success := token.WaitTimeout(time.Second * 5)
+	fmt.Printf("Here %t, %s", success, token.Error())
+	if !success || token.Error() != nil {
+		fmt.Printf("Failed to connect: %s", token.Error())
 		return token.Error()
 	}
 
