@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"homecontrol-mqtt-go/internal/pkg/endpoints"
+	"log"
 	"net"
 	"strings"
 	"time"
@@ -45,6 +46,7 @@ func NewMqttDevice(hostname string, uid string, username string, password string
 	opts.SetClientID(uid)
 	opts.SetUsername(username)
 	opts.SetPassword(password)
+	opts.SetWill(fmt.Sprintf("d/%s/0/online", uid), fmt.Sprintf("d/%s/0/offline", uid), 1, false)
 
 	opts.SetDefaultPublishHandler(device.onMessageHandler)
 	opts.OnConnect = device.onConnectHandler
@@ -110,7 +112,12 @@ func (obj *MqttDevice) Connect() error {
 		return err
 	}
 
-	err = obj.sendMsg(fmt.Sprintf("d/%s/0/announce", obj.uid), "")
+	err = obj.subscribeTopic("broadcast")
+	if err != nil {
+		return err
+	}
+
+	err = obj.announce()
 	if err != nil {
 		return err
 	}
@@ -119,6 +126,7 @@ func (obj *MqttDevice) Connect() error {
 }
 
 func (obj *MqttDevice) Disconnect() {
+	obj.sendRetainedMsg(fmt.Sprintf("d/%s/0/offline", obj.uid), "")
 	obj.client.Disconnect(250)
 }
 
@@ -160,6 +168,39 @@ func (obj *MqttDevice) subscribeTopic(topic string) error {
 	return nil
 }
 
+func (obj *MqttDevice) announce() error {
+	err := obj.sendMsg(fmt.Sprintf("d/%s/0/announce", obj.uid), "")
+	if err != nil {
+		return err
+	}
+
+	err = obj.sendRetainedMsg(fmt.Sprintf("d/%s/0/online", obj.uid), "")
+	if err != nil {
+		return err
+	}
+
+	for _, value := range obj.endpoints {
+		value.SendStatus()
+	}
+
+	return nil
+}
+
+func (obj *MqttDevice) sendRetainedMsg(topic string, msg string) error {
+	token := obj.client.Publish(topic, 1, true, msg)
+	success := token.WaitTimeout(time.Second * 2)
+	if !success {
+		return fmt.Errorf("failed to subscribe topic %s. Timeout occurred", topic)
+	}
+	if token.Error() != nil {
+		return fmt.Errorf(
+			"got error in token when sending message: %s on topic: %s. %s",
+			topic, msg, token.Error(),
+		)
+	}
+	return nil
+}
+
 func (obj *MqttDevice) sendMsg(topic string, msg string) error {
 	token := obj.client.Publish(topic, 1, false, msg)
 	success := token.WaitTimeout(time.Second * 2)
@@ -176,6 +217,14 @@ func (obj *MqttDevice) sendMsg(topic string, msg string) error {
 }
 
 func (obj *MqttDevice) onMessageHandler(client mqtt.Client, msg mqtt.Message) {
+
+	log.Printf("MSG T: %s M:%s\n", msg.Topic(), string(msg.Payload()))
+	if strings.Contains(msg.Topic(), "broadcast") {
+		if strings.Contains(string(msg.Payload()), "serverannounce") {
+			obj.announce()
+		}
+	}
+
 	epID := parseEndpointID(msg.Topic())
 
 	if epID == zeroEnpID {

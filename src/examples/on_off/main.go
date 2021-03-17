@@ -23,13 +23,13 @@ func ep1StateChange(ep endpoints.Endpoint, cmd string, msg string) {
 
 func main() {
 
-	mqttDevice, err := devices.NewMqttDevice("192.168.8.1", "ttdev1234", "hc", "admin", true)
+	mqttDevice, err := devices.NewMqttDevice("192.168.8.1", "test_dev", "hc", "admin", true)
 	if err != nil {
 		log.Printf("failed to create MQTT device: %s\n", err.Error())
 		return
 	}
 
-	ep1 := endpoints.NewOnOffEndpoint("ep1", ep1StateChange)
+	ep1 := endpoints.NewOnOffEndpoint("ep1", "On_Off", ep1StateChange)
 
 	mqttDevice.AddEndpoint(ep1)
 

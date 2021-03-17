@@ -8,5 +8,6 @@ type Endpoint interface {
 	RegisterOnStateChangedCb(cb func(ep Endpoint, cmd string, state string))
 	RegisterSendMsgCb(cb func(topic string, msg string) error)
 	SendConfig()
-	SendFeedbackMessage(smd string, msg string) error
+	SendFeedbackMessage(cmd string, msg string) error
+	SendStatus()
 }
