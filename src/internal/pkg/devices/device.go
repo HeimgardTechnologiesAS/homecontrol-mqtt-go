@@ -22,16 +22,18 @@ const (
 
 type MqttDevice struct {
 	uid       string
+	name      string
 	client    mqtt.Client
 	epZero    *endpoints.ZeroEndpoint
 	endpoints map[string]endpoints.Endpoint
 	quitC     chan error
 }
 
-func NewMqttDevice(hostname string, uid string, username string, password string, isSecure bool) (*MqttDevice, error) {
+func NewMqttDevice(hostname string, uid string, username string, password string, isSecure bool, deviceName string) (*MqttDevice, error) {
 
 	device := &MqttDevice{
 		uid:       uid,
+		name:      deviceName,
 		endpoints: make(map[string]endpoints.Endpoint),
 		quitC:     make(chan error),
 	}
@@ -126,7 +128,7 @@ func (obj *MqttDevice) Connect() error {
 }
 
 func (obj *MqttDevice) Disconnect() {
-	obj.sendRetainedMsg(fmt.Sprintf("d/%s/0/offline", obj.uid), "")
+	obj.sendMsg(fmt.Sprintf("d/%s/0/offline", obj.uid), "")
 	obj.client.Disconnect(250)
 }
 
@@ -169,12 +171,12 @@ func (obj *MqttDevice) subscribeTopic(topic string) error {
 }
 
 func (obj *MqttDevice) announce() error {
-	err := obj.sendMsg(fmt.Sprintf("d/%s/0/announce", obj.uid), "")
+	err := obj.sendMsg(fmt.Sprintf("d/%s/0/announce", obj.uid), obj.name)
 	if err != nil {
 		return err
 	}
 
-	err = obj.sendRetainedMsg(fmt.Sprintf("d/%s/0/online", obj.uid), "")
+	err = obj.sendMsg(fmt.Sprintf("d/%s/0/online", obj.uid), "")
 	if err != nil {
 		return err
 	}
@@ -228,6 +230,7 @@ func (obj *MqttDevice) onMessageHandler(client mqtt.Client, msg mqtt.Message) {
 	epID := parseEndpointID(msg.Topic())
 
 	if epID == zeroEnpID {
+		obj.sendMsg(fmt.Sprintf("d/%s/0/online", obj.uid), "")
 		obj.epZero.HandleMessage(string(msg.Payload()))
 		return
 	}
