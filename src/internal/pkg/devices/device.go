@@ -144,6 +144,7 @@ func (obj *MqttDevice) GetQuitCh() chan error {
 }
 
 func (obj *MqttDevice) AddEndpoint(enp endpoints.Endpoint) {
+	log.Printf("Addind enp %s", enp.GetID())
 	enp.SetOwnerID(obj.uid)
 	enp.RegisterSendMsgCb(obj.sendMsg)
 	obj.endpoints[enp.GetID()] = enp
@@ -151,6 +152,7 @@ func (obj *MqttDevice) AddEndpoint(enp endpoints.Endpoint) {
 
 func (obj *MqttDevice) SendConfigs() {
 	// send zero endpoint config
+	log.Printf("SENDING CONFIG")
 	obj.epZero.SendConfig(len(obj.endpoints))
 	// send endpoints configs
 	for _, value := range obj.endpoints {
@@ -188,21 +190,6 @@ func (obj *MqttDevice) announce() error {
 	return nil
 }
 
-func (obj *MqttDevice) sendRetainedMsg(topic string, msg string) error {
-	token := obj.client.Publish(topic, 1, true, msg)
-	success := token.WaitTimeout(time.Second * 2)
-	if !success {
-		return fmt.Errorf("failed to subscribe topic %s. Timeout occurred", topic)
-	}
-	if token.Error() != nil {
-		return fmt.Errorf(
-			"got error in token when sending message: %s on topic: %s. %s",
-			topic, msg, token.Error(),
-		)
-	}
-	return nil
-}
-
 func (obj *MqttDevice) sendMsg(topic string, msg string) error {
 	token := obj.client.Publish(topic, 1, false, msg)
 	success := token.WaitTimeout(time.Second * 2)
@@ -215,6 +202,7 @@ func (obj *MqttDevice) sendMsg(topic string, msg string) error {
 			topic, msg, token.Error(),
 		)
 	}
+	log.Printf("SEND: Toopic:  %s  Message: %s", topic, msg)
 	return nil
 }
 

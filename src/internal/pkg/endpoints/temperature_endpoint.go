@@ -4,29 +4,28 @@ import (
 	c "homecontrol-mqtt-go/internal/pkg/commands"
 )
 
-type OnOffEndpoint struct {
+type TemperatureEndpoint struct {
 	*endpoint
 }
 
-func NewOnOffEndpoint(
+func NewTemperatureEndpoint(
 	epId string,
 	epName string,
 	onStateChange func(ep Endpoint, cmd string, state string),
-) *OnOffEndpoint {
-	return &OnOffEndpoint{
+) *TemperatureEndpoint {
+	return &TemperatureEndpoint{
 		endpoint: newEndpoint(
-			"pwr",
+			"tmp",
 			"60",
 			epId,
 			epName,
 			onStateChange,
 			map[string]c.Command{
-				c.CP: c.NewCommand(c.CP),
-				c.SP: c.NewCommand(c.SP),
+				c.ST: c.NewCommand(c.ST),
 			}),
 	}
 }
 
-func (obj *OnOffEndpoint) SendStatus() {
-	obj.SendFeedbackMessage(c.SP, obj.commands[c.SP].GetState())
+func (obj *TemperatureEndpoint) SendStatus() {
+	obj.SendFeedbackMessage(c.ST, obj.commands[c.ST].GetState())
 }

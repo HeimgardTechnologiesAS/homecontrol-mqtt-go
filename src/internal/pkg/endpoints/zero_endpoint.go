@@ -2,6 +2,7 @@ package endpoints
 
 import (
 	"fmt"
+	"log"
 	"strconv"
 )
 
@@ -27,14 +28,15 @@ func NewZeroEndpoint(
 }
 
 func (obj *ZeroEndpoint) HandleMessage(msg string) {
+	log.Printf("HANDLING ZERO MSG %s", msg)
 	if obj.sendConfigsCb != nil {
 		obj.sendConfigsCb()
 	}
 }
 
 func (obj *ZeroEndpoint) SendConfig(enpCount int) {
-	s := strconv.Itoa(enpCount)
+	cnt := strconv.Itoa(enpCount)
 	if obj.sendFeedbackCb != nil {
-		obj.sendFeedbackCb(fmt.Sprintf("d/%s/%s/conf", obj.ownerID, obj.id), s)
+		obj.sendFeedbackCb(fmt.Sprintf("d/%s/%s/conf", obj.ownerID, obj.id), cnt)
 	}
 }
