@@ -2,7 +2,6 @@ package endpoints
 
 import (
 	"fmt"
-	"log"
 	"strconv"
 )
 
@@ -28,7 +27,6 @@ func NewZeroEndpoint(
 }
 
 func (obj *ZeroEndpoint) HandleMessage(msg string) {
-	log.Printf("HANDLING ZERO MSG %s", msg)
 	if obj.sendConfigsCb != nil {
 		obj.sendConfigsCb()
 	}

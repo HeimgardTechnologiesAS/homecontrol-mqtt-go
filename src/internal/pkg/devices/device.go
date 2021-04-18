@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"homecontrol-mqtt-go/internal/pkg/endpoints"
-	"log"
 	"net"
 	"strings"
 	"time"
@@ -29,7 +28,14 @@ type MqttDevice struct {
 	quitC     chan error
 }
 
-func NewMqttDevice(hostname string, uid string, username string, password string, isSecure bool, deviceName string) (*MqttDevice, error) {
+func NewMqttDevice(
+	hostname string,
+	uid string,
+	username string,
+	password string,
+	isSecure bool,
+	deviceName string,
+) (Device, error) {
 
 	device := &MqttDevice{
 		uid:       uid,
@@ -144,7 +150,6 @@ func (obj *MqttDevice) GetQuitCh() chan error {
 }
 
 func (obj *MqttDevice) AddEndpoint(enp endpoints.Endpoint) {
-	log.Printf("Addind enp %s", enp.GetID())
 	enp.SetOwnerID(obj.uid)
 	enp.RegisterSendMsgCb(obj.sendMsg)
 	obj.endpoints[enp.GetID()] = enp
@@ -152,7 +157,6 @@ func (obj *MqttDevice) AddEndpoint(enp endpoints.Endpoint) {
 
 func (obj *MqttDevice) SendConfigs() {
 	// send zero endpoint config
-	log.Printf("SENDING CONFIG")
 	obj.epZero.SendConfig(len(obj.endpoints))
 	// send endpoints configs
 	for _, value := range obj.endpoints {
@@ -202,13 +206,11 @@ func (obj *MqttDevice) sendMsg(topic string, msg string) error {
 			topic, msg, token.Error(),
 		)
 	}
-	log.Printf("SEND: Toopic:  %s  Message: %s", topic, msg)
 	return nil
 }
 
 func (obj *MqttDevice) onMessageHandler(client mqtt.Client, msg mqtt.Message) {
 
-	log.Printf("MSG T: %s M:%s\n", msg.Topic(), string(msg.Payload()))
 	if strings.Contains(msg.Topic(), "broadcast") {
 		if strings.Contains(string(msg.Payload()), "serverannounce") {
 			obj.announce()

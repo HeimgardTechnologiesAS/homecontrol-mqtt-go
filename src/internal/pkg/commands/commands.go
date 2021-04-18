@@ -11,4 +11,5 @@ const (
 	SHS  = "shs"
 	CI   = "ci" // control identify
 	SM   = "sm" //status motion
+	SH   = "sh" //status humidity
 )

@@ -87,7 +87,6 @@ func (obj *endpoint) SendConfig() {
 		if obj.name != "" {
 			cfg = fmt.Sprintf("%sname=%s;", cfg, obj.name)
 		}
-		log.Printf("d/%s/%s/conf  %s", obj.ownerID, obj.id, cfg)
 		obj.sendFeedbackCb(fmt.Sprintf("d/%s/%s/conf", obj.ownerID, obj.id), cfg)
 	}
 }
