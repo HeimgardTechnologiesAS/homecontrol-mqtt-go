@@ -14,11 +14,12 @@ import (
 )
 
 const (
-	TLS_PORT  = 8883
-	TCP_PORT  = 1883
-	zeroEnpID = "0"
+	TLS_PORT  = 8883 // secure TLS port
+	TCP_PORT  = 1883 // not secure port
+	zeroEnpID = "0"  // zero endpoint ID, must be 0
 )
 
+// MqttDevice struct that defines all method needed to connect and communicate with HC GW
 type MqttDevice struct {
 	uid       string
 	name      string
@@ -28,6 +29,7 @@ type MqttDevice struct {
 	quitC     chan error
 }
 
+// NewMqttDevice constructs Mqtt device
 func NewMqttDevice(
 	hostname string,
 	uid string,
@@ -74,6 +76,7 @@ func NewMqttDevice(
 	return device, nil
 }
 
+// fetchCertificate fetches tls cert from HC gateway
 func fetchCertificate(hostname string) (*tls.Config, error) {
 
 	conn, err := net.Dial("tcp", fmt.Sprintf("%s:%d", hostname, TLS_PORT))
@@ -101,6 +104,7 @@ func fetchCertificate(hostname string) (*tls.Config, error) {
 	}, nil
 }
 
+// Connect connects Device object to HC gateway
 func (obj *MqttDevice) Connect() error {
 	if obj.client == nil {
 		return errors.New("client is not initialized")
@@ -133,11 +137,13 @@ func (obj *MqttDevice) Connect() error {
 	return nil
 }
 
+// Disconnect disconnects Device from HC gateway
 func (obj *MqttDevice) Disconnect() {
 	obj.sendMsg(fmt.Sprintf("d/%s/0/offline", obj.uid), "")
 	obj.client.Disconnect(250)
 }
 
+// RunForever runs infinite loop if MQTT Device should listen forever
 func (obj *MqttDevice) RunForever() error {
 	for {
 		err := <-obj.quitC
@@ -145,16 +151,19 @@ func (obj *MqttDevice) RunForever() error {
 	}
 }
 
+// GetQuitCh returns Quit Channel needed to stop RunForever loop
 func (obj *MqttDevice) GetQuitCh() chan error {
 	return obj.quitC
 }
 
+// AddEndpoint adds new endpoint to MQTT Device
 func (obj *MqttDevice) AddEndpoint(enp endpoints.Endpoint) {
 	enp.SetOwnerID(obj.uid)
 	enp.RegisterSendMsgCb(obj.sendMsg)
 	obj.endpoints[enp.GetID()] = enp
 }
 
+// SendConfigs sends config for each endpoint
 func (obj *MqttDevice) SendConfigs() {
 	// send zero endpoint config
 	obj.epZero.SendConfig(len(obj.endpoints))
@@ -164,6 +173,7 @@ func (obj *MqttDevice) SendConfigs() {
 	}
 }
 
+// subscribeTopic subscribes MQTT to provided topic
 func (obj *MqttDevice) subscribeTopic(topic string) error {
 	token := obj.client.Subscribe(topic, 1, nil)
 	success := token.WaitTimeout(time.Second * 2)
@@ -176,6 +186,7 @@ func (obj *MqttDevice) subscribeTopic(topic string) error {
 	return nil
 }
 
+// announce announces MQTT device to HC gateway
 func (obj *MqttDevice) announce() error {
 	err := obj.sendMsg(fmt.Sprintf("d/%s/0/announce", obj.uid), obj.name)
 	if err != nil {
@@ -194,6 +205,7 @@ func (obj *MqttDevice) announce() error {
 	return nil
 }
 
+// sendMsg sends message to HC GW
 func (obj *MqttDevice) sendMsg(topic string, msg string) error {
 	token := obj.client.Publish(topic, 1, false, msg)
 	success := token.WaitTimeout(time.Second * 2)
@@ -209,6 +221,7 @@ func (obj *MqttDevice) sendMsg(topic string, msg string) error {
 	return nil
 }
 
+// onMessageHandler handles incoming mqtt messages
 func (obj *MqttDevice) onMessageHandler(client mqtt.Client, msg mqtt.Message) {
 
 	if strings.Contains(msg.Topic(), "broadcast") {
@@ -230,14 +243,17 @@ func (obj *MqttDevice) onMessageHandler(client mqtt.Client, msg mqtt.Message) {
 	}
 }
 
+// onConnectHandler handles MQTT connect event
 func (obj *MqttDevice) onConnectHandler(client mqtt.Client) {
 	// do nothing
 }
 
+// onConnectionLostHandler handles MQTT connection lost event
 func (obj *MqttDevice) connectionLostHandler(client mqtt.Client, err error) {
 	obj.quitC <- fmt.Errorf("client with ID %s lost connection. Error: %s", obj.uid, err.Error())
 }
 
+// parseEndpointID helper method to parse endpoint id from incoming message
 func parseEndpointID(token string) string {
 	fDelimeterIn := strings.Index(token, "/")
 	if fDelimeterIn > -1 {
@@ -250,6 +266,7 @@ func parseEndpointID(token string) string {
 	return ""
 }
 
+// parseCommand helper method to parse command from incoming message
 func parseCommand(token string) string {
 	lDelimeterIn := strings.LastIndex(token, "/")
 	if lDelimeterIn > -1 {

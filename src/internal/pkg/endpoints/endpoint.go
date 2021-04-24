@@ -7,6 +7,8 @@ import (
 	"log"
 )
 
+// endpoint struct should be embedded to all child endpoints.
+// It defines all methods that one endpint must have
 type endpoint struct {
 	epType           string
 	reportingTime    string
@@ -18,6 +20,7 @@ type endpoint struct {
 	commands         map[string]c.Command
 }
 
+// newEndpoint constructs a new endpoint
 func newEndpoint(
 	epType string,
 	epReportingTime string,
@@ -36,26 +39,32 @@ func newEndpoint(
 	}
 }
 
+// SetOwnerID sets endpoint's owner ID (device ID)
 func (obj *endpoint) SetOwnerID(id string) {
 	obj.ownerID = id
 }
 
+// GetOwnerID returns owner ID
 func (obj *endpoint) GetOwnerID() string {
 	return obj.ownerID
 }
 
+// GetID returns endpoint ID
 func (obj *endpoint) GetID() string {
 	return obj.id
 }
 
+// RegisterSendMsgCb registers callback function that is called when message from endpoint must be sent to HC GW
 func (obj *endpoint) RegisterSendMsgCb(cb func(topic string, msg string) error) {
 	obj.sendFeedbackCb = cb
 }
 
+// RegisterOnStateChangedCb registers callback funkcion that is called when endpoint state is changed
 func (obj *endpoint) RegisterOnStateChangedCb(cb func(ep Endpoint, cmd string, state string)) {
 	obj.onStateChangedCb = cb
 }
 
+// HandleMessage handles incoming message
 func (obj *endpoint) HandleMessage(cmd string, msg string) {
 	val, ok := obj.commands[cmd]
 	if !ok {
@@ -68,6 +77,7 @@ func (obj *endpoint) HandleMessage(cmd string, msg string) {
 	}
 }
 
+// SendFeedbackMessage sends feedback message to HC GW when some of the commands change state
 func (obj *endpoint) SendFeedbackMessage(cmd string, msg string) error {
 	val, ok := obj.commands[cmd]
 	if !ok {
@@ -81,6 +91,7 @@ func (obj *endpoint) SendFeedbackMessage(cmd string, msg string) error {
 	return errors.New("callback not set")
 }
 
+// SendConfig sends endpoint config to HC GW
 func (obj *endpoint) SendConfig() {
 	if obj.sendFeedbackCb != nil {
 		cfg := fmt.Sprintf("e=%s;r=%s;", obj.epType, obj.reportingTime)
@@ -91,6 +102,7 @@ func (obj *endpoint) SendConfig() {
 	}
 }
 
+// SendStatus sends current endpoint commands status
 func (obj *endpoint) SendStatus() {
 	log.Printf("Not implemented. Endpoint ID: %s, Endpoint type: %s", obj.id, obj.epType)
 }
