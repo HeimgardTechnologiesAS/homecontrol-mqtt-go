@@ -1,6 +1,7 @@
 package endpoints
 
 import (
+	"fmt"
 	c "homecontrol-mqtt-go/internal/pkg/commands"
 )
 
@@ -11,7 +12,7 @@ type OnOffEndpoint struct {
 func NewOnOffEndpoint(
 	epId string,
 	epName string,
-	onStateChange func(ep Endpoint, cmd string, state string),
+	onStateChange func(ep Endpoint, cmd string, state string, err error),
 ) *OnOffEndpoint {
 	return &OnOffEndpoint{
 		endpoint: newEndpoint(
@@ -27,6 +28,10 @@ func NewOnOffEndpoint(
 	}
 }
 
-func (obj *OnOffEndpoint) SendStatus() {
-	obj.SendFeedbackMessage(c.SP, obj.commands[c.SP].GetState())
+func (obj *OnOffEndpoint) SendStatus() error {
+	err := obj.SendFeedbackMessage(c.SP, obj.commands[c.SP].GetState())
+	if err != nil {
+		return fmt.Errorf("endpoint [%s], failed to send SP feedback: %s", obj.GetID(), err)
+	}
+	return nil
 }

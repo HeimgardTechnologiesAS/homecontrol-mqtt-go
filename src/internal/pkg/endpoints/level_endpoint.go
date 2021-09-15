@@ -1,6 +1,7 @@
 package endpoints
 
 import (
+	"fmt"
 	c "homecontrol-mqtt-go/internal/pkg/commands"
 )
 
@@ -11,7 +12,7 @@ type LevelEndpoint struct {
 func NewLevelEndpoint(
 	epId string,
 	epName string,
-	onStateChange func(ep Endpoint, cmd string, state string),
+	onStateChange func(ep Endpoint, cmd string, state string, err error),
 ) *LevelEndpoint {
 	return &LevelEndpoint{
 		endpoint: newEndpoint(
@@ -29,7 +30,14 @@ func NewLevelEndpoint(
 	}
 }
 
-func (obj *LevelEndpoint) SendStatus() {
-	obj.SendFeedbackMessage(c.SP, obj.commands[c.SP].GetState())
-	obj.SendFeedbackMessage(c.SL, obj.commands[c.SL].GetState())
+func (obj *LevelEndpoint) SendStatus() error {
+	err := obj.SendFeedbackMessage(c.SP, obj.commands[c.SP].GetState())
+	if err != nil {
+		return fmt.Errorf("endpoint [%s], failed to send SP feedback: %s", obj.GetID(), err)
+	}
+	err = obj.SendFeedbackMessage(c.SL, obj.commands[c.SL].GetState())
+	if err != nil {
+		return fmt.Errorf("endpoint [%s], failed to send SL feedback: %s", obj.GetID(), err)
+	}
+	return nil
 }

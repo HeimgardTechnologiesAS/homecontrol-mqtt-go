@@ -12,26 +12,28 @@ import (
 	"homecontrol-mqtt-go/internal/pkg/endpoints"
 )
 
-func ep1StateChange(ep endpoints.Endpoint, cmd string, msg string) {
+func ep1StateChange(ep endpoints.Endpoint, cmd string, msg string, err error) {
 	log.Printf("Message received. Endpoint: %s, Command: %s, Message: %s\n", ep.GetID(), cmd, msg)
-	if msg == "1" {
-		_ = ep.SendFeedbackMessage(commands.SP, "1")
-	} else {
-		_ = ep.SendFeedbackMessage(commands.SP, "0")
+	if err != nil {
+		log.Printf("error when handling state change: %s", err)
+		return
+	}
+	// msg can be equal to "0" or "1", just send it back, since there is nothing to control
+	err = ep.SendFeedbackMessage(commands.SP, msg)
+	if err != nil {
+		log.Printf("error while sending feedback message %s", err)
 	}
 }
 
 func main() {
 
-	mqttDevice, err := devices.NewMqttDevice("192.168.8.1", "test_dev", "hc", "admin", true)
+	mqttDevice, err := devices.NewMqttDevice("192.168.8.1", "test_dev12345", "hc", "admin", true, "mqtt_device")
 	if err != nil {
 		log.Printf("failed to create MQTT device: %s\n", err.Error())
 		return
 	}
 
-	ep1 := endpoints.NewOnOffEndpoint("ep1", "On_Off", ep1StateChange)
-
-	mqttDevice.AddEndpoint(ep1)
+	mqttDevice.AddEndpoint(endpoints.NewOnOffEndpoint("ep1", "On_Off", ep1StateChange))
 
 	err = mqttDevice.Connect()
 	if err != nil {
@@ -40,8 +42,9 @@ func main() {
 	}
 	defer mqttDevice.Disconnect()
 
-	setSignalInterrupt(mqttDevice.GetQuitCh())
-	err = mqttDevice.RunForever()
+	quitCh := make(chan error)
+	setSignalInterrupt(quitCh)
+	err = mqttDevice.RunForever(quitCh)
 	if err != nil {
 		log.Printf("Device stopped unexpectedly. %s", err.Error())
 	}

@@ -43,7 +43,6 @@ func NewMqttDevice(
 		uid:       uid,
 		name:      deviceName,
 		endpoints: make(map[string]endpoints.Endpoint),
-		quitC:     make(chan error),
 	}
 
 	opts := mqtt.NewClientOptions()
@@ -144,16 +143,12 @@ func (obj *MqttDevice) Disconnect() {
 }
 
 // RunForever runs infinite loop if MQTT Device should listen forever
-func (obj *MqttDevice) RunForever() error {
+func (obj *MqttDevice) RunForever(quitC chan error) error {
+	obj.quitC = quitC
 	for {
-		err := <-obj.quitC
+		err := <-quitC
 		return err
 	}
-}
-
-// GetQuitCh returns Quit Channel needed to stop RunForever loop
-func (obj *MqttDevice) GetQuitCh() chan error {
-	return obj.quitC
 }
 
 // AddEndpoint adds new endpoint to MQTT Device
@@ -190,18 +185,20 @@ func (obj *MqttDevice) subscribeTopic(topic string) error {
 func (obj *MqttDevice) announce() error {
 	err := obj.sendMsg(fmt.Sprintf("d/%s/0/announce", obj.uid), obj.name)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to announce device %s", err)
 	}
 
 	err = obj.sendMsg(fmt.Sprintf("d/%s/0/online", obj.uid), "")
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to send online device status %s", err)
 	}
 
 	for _, value := range obj.endpoints {
-		value.SendStatus()
+		err = value.SendStatus()
+		if err != nil {
+			return fmt.Errorf("failed to send status for endpoint %s, error: %s", value.GetID(), err)
+		}
 	}
-
 	return nil
 }
 
@@ -250,7 +247,9 @@ func (obj *MqttDevice) onConnectHandler(client mqtt.Client) {
 
 // onConnectionLostHandler handles MQTT connection lost event
 func (obj *MqttDevice) connectionLostHandler(client mqtt.Client, err error) {
-	obj.quitC <- fmt.Errorf("client with ID %s lost connection. Error: %s", obj.uid, err.Error())
+	if obj.quitC != nil {
+		obj.quitC <- fmt.Errorf("client with ID %s lost connection. Error: %s", obj.uid, err.Error())
+	}
 }
 
 // parseEndpointID helper method to parse endpoint id from incoming message

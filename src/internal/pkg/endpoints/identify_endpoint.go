@@ -11,7 +11,7 @@ type IdentifyEndpoint struct {
 func NewIdentifyEndpoint(
 	epId string,
 	epName string,
-	onStateChange func(ep Endpoint, cmd string, state string),
+	onStateChange func(ep Endpoint, cmd string, state string, err error),
 ) *IdentifyEndpoint {
 	return &IdentifyEndpoint{
 		endpoint: newEndpoint(
@@ -26,6 +26,7 @@ func NewIdentifyEndpoint(
 	}
 }
 
-func (obj *IdentifyEndpoint) SendStatus() {
+func (obj *IdentifyEndpoint) SendStatus() error {
 	// do nothing
+	return nil
 }

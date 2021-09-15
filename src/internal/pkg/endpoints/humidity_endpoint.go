@@ -1,6 +1,7 @@
 package endpoints
 
 import (
+	"fmt"
 	c "homecontrol-mqtt-go/internal/pkg/commands"
 )
 
@@ -11,7 +12,7 @@ type HumidityEndpoint struct {
 func NewHumidityEndpoint(
 	epId string,
 	epName string,
-	onStateChange func(ep Endpoint, cmd string, state string),
+	onStateChange func(ep Endpoint, cmd string, state string, err error),
 ) *HumidityEndpoint {
 	return &HumidityEndpoint{
 		endpoint: newEndpoint(
@@ -26,6 +27,10 @@ func NewHumidityEndpoint(
 	}
 }
 
-func (obj *HumidityEndpoint) SendStatus() {
-	obj.SendFeedbackMessage(c.SH, obj.commands[c.SH].GetState())
+func (obj *HumidityEndpoint) SendStatus() error {
+	err := obj.SendFeedbackMessage(c.SH, obj.commands[c.SH].GetState())
+	if err != nil {
+		return fmt.Errorf("endpoint [%s], failed to send SH feedback: %s", obj.GetID(), err)
+	}
+	return nil
 }

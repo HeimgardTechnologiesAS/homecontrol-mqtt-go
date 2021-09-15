@@ -9,9 +9,7 @@ type Device interface {
 	// Disconnect disconnects Device from HC gateway
 	Disconnect()
 	// RunForever runs infinite loop if MQTT Device should listen forever
-	RunForever() error
-	// GetQuitCh returns Quit Channel needed to stop RunForever loop
-	GetQuitCh() chan error
+	RunForever(quitC chan error) error
 	// AddEndpoint adds new endpoint to MQTT Device
 	AddEndpoint(enp endpoints.Endpoint)
 }

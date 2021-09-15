@@ -11,13 +11,13 @@ type Endpoint interface {
 	// HandleMessage handles incoming message
 	HandleMessage(cmd string, msg string)
 	// RegisterOnStateChangedCb registers callback funkcion that is called when endpoint state is changed
-	RegisterOnStateChangedCb(cb func(ep Endpoint, cmd string, state string))
+	RegisterOnStateChangedCb(cb func(ep Endpoint, cmd string, state string, err error))
 	// RegisterSendMsgCb registers callback function that is called when message from endpoint must be sent to HC GW
 	RegisterSendMsgCb(cb func(topic string, msg string) error)
 	// SendConfig sends endpoint config to HC GW
-	SendConfig()
+	SendConfig() error
 	// SendFeedbackMessage sends feedback message to HC GW when some of the commands change state
 	SendFeedbackMessage(cmd string, msg string) error
 	// SendStatus sends current endpoint commands status
-	SendStatus()
+	SendStatus() error
 }

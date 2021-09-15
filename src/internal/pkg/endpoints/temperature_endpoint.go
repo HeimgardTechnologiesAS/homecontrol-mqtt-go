@@ -1,6 +1,7 @@
 package endpoints
 
 import (
+	"fmt"
 	c "homecontrol-mqtt-go/internal/pkg/commands"
 )
 
@@ -11,7 +12,7 @@ type TemperatureEndpoint struct {
 func NewTemperatureEndpoint(
 	epId string,
 	epName string,
-	onStateChange func(ep Endpoint, cmd string, state string),
+	onStateChange func(ep Endpoint, cmd string, state string, err error),
 ) *TemperatureEndpoint {
 	return &TemperatureEndpoint{
 		endpoint: newEndpoint(
@@ -26,6 +27,10 @@ func NewTemperatureEndpoint(
 	}
 }
 
-func (obj *TemperatureEndpoint) SendStatus() {
-	obj.SendFeedbackMessage(c.ST, obj.commands[c.ST].GetState())
+func (obj *TemperatureEndpoint) SendStatus() error {
+	err := obj.SendFeedbackMessage(c.ST, obj.commands[c.ST].GetState())
+	if err != nil {
+		return fmt.Errorf("endpoint [%s], failed to send ST feedback: %s", obj.GetID(), err)
+	}
+	return nil
 }

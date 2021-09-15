@@ -1,6 +1,7 @@
 package endpoints
 
 import (
+	"fmt"
 	c "homecontrol-mqtt-go/internal/pkg/commands"
 )
 
@@ -11,7 +12,7 @@ type MotionEndpoint struct {
 func NewMotionEndpoint(
 	epId string,
 	epName string,
-	onStateChange func(ep Endpoint, cmd string, state string),
+	onStateChange func(ep Endpoint, cmd string, state string, err error),
 ) *MotionEndpoint {
 	return &MotionEndpoint{
 		endpoint: newEndpoint(
@@ -26,6 +27,10 @@ func NewMotionEndpoint(
 	}
 }
 
-func (obj *MotionEndpoint) SendStatus() {
-	obj.SendFeedbackMessage(c.SM, obj.commands[c.SM].GetState())
+func (obj *MotionEndpoint) SendStatus() error {
+	err := obj.SendFeedbackMessage(c.SM, obj.commands[c.SM].GetState())
+	if err != nil {
+		return fmt.Errorf("endpoint [%s], failed to send SM feedback: %s", obj.GetID(), err)
+	}
+	return nil
 }

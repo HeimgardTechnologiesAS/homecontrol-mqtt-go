@@ -1,10 +1,8 @@
 package endpoints
 
 import (
-	"errors"
 	"fmt"
 	c "homecontrol-mqtt-go/internal/pkg/commands"
-	"log"
 )
 
 // endpoint struct should be embedded to all child endpoints.
@@ -16,7 +14,7 @@ type endpoint struct {
 	id               string
 	name             string
 	sendFeedbackCb   func(topic string, msg string) error
-	onStateChangedCb func(ep Endpoint, cmd string, state string)
+	onStateChangedCb func(ep Endpoint, cmd string, state string, err error)
 	commands         map[string]c.Command
 }
 
@@ -26,7 +24,7 @@ func newEndpoint(
 	epReportingTime string,
 	epId string,
 	epName string,
-	epOnStateChange func(ep Endpoint, cmd string, state string),
+	epOnStateChange func(ep Endpoint, cmd string, state string, err error),
 	epCommands map[string]c.Command,
 ) *endpoint {
 	return &endpoint{
@@ -60,7 +58,7 @@ func (obj *endpoint) RegisterSendMsgCb(cb func(topic string, msg string) error) 
 }
 
 // RegisterOnStateChangedCb registers callback funkcion that is called when endpoint state is changed
-func (obj *endpoint) RegisterOnStateChangedCb(cb func(ep Endpoint, cmd string, state string)) {
+func (obj *endpoint) RegisterOnStateChangedCb(cb func(ep Endpoint, cmd string, state string, err error)) {
 	obj.onStateChangedCb = cb
 }
 
@@ -68,41 +66,41 @@ func (obj *endpoint) RegisterOnStateChangedCb(cb func(ep Endpoint, cmd string, s
 func (obj *endpoint) HandleMessage(cmd string, msg string) {
 	val, ok := obj.commands[cmd]
 	if !ok {
-		log.Printf("received command not supported %s, ep ID: %s", cmd, obj.id)
+		obj.onStateChangedCb(obj, cmd, msg, fmt.Errorf("received command not supported %s", cmd))
 		return
 	}
 	val.SetState(msg)
 	if obj.onStateChangedCb != nil {
-		obj.onStateChangedCb(obj, cmd, msg)
+		obj.onStateChangedCb(obj, cmd, msg, nil)
 	}
 }
 
 // SendFeedbackMessage sends feedback message to HC GW when some of the commands change state
 func (obj *endpoint) SendFeedbackMessage(cmd string, msg string) error {
+	if obj.sendFeedbackCb == nil {
+		return fmt.Errorf("sendFeedbackCallback not set for endpoint ID %s", obj.id)
+	}
 	val, ok := obj.commands[cmd]
 	if !ok {
-		return fmt.Errorf("unsupported command type provided: %s", cmd)
+		return fmt.Errorf("unsupported command type: [%s] for endpoint ID: %s", cmd, obj.id)
 	}
 	val.SetState(msg)
-	if obj.sendFeedbackCb != nil {
-		obj.sendFeedbackCb(fmt.Sprintf("d/%s/%s/%s", obj.ownerID, obj.id, cmd), msg)
-		return nil
-	}
-	return errors.New("callback not set")
+	return obj.sendFeedbackCb(fmt.Sprintf("d/%s/%s/%s", obj.ownerID, obj.id, cmd), msg)
 }
 
 // SendConfig sends endpoint config to HC GW
-func (obj *endpoint) SendConfig() {
-	if obj.sendFeedbackCb != nil {
-		cfg := fmt.Sprintf("e=%s;r=%s;", obj.epType, obj.reportingTime)
-		if obj.name != "" {
-			cfg = fmt.Sprintf("%sname=%s;", cfg, obj.name)
-		}
-		obj.sendFeedbackCb(fmt.Sprintf("d/%s/%s/conf", obj.ownerID, obj.id), cfg)
+func (obj *endpoint) SendConfig() error {
+	if obj.sendFeedbackCb == nil {
+		return fmt.Errorf("sendFeedbackCallback not set for endpoint ID %s", obj.id)
 	}
+	cfg := fmt.Sprintf("e=%s;r=%s;", obj.epType, obj.reportingTime)
+	if obj.name != "" {
+		cfg = fmt.Sprintf("%sname=%s;", cfg, obj.name)
+	}
+	return obj.sendFeedbackCb(fmt.Sprintf("d/%s/%s/conf", obj.ownerID, obj.id), cfg)
 }
 
 // SendStatus sends current endpoint commands status
-func (obj *endpoint) SendStatus() {
-	log.Printf("Not implemented. Endpoint ID: %s, Endpoint type: %s", obj.id, obj.epType)
+func (obj *endpoint) SendStatus() error {
+	return fmt.Errorf("Not implemented. Endpoint ID: %s, Endpoint type: %s", obj.id, obj.epType)
 }

@@ -32,9 +32,13 @@ func (obj *ZeroEndpoint) HandleMessage(msg string) {
 	}
 }
 
-func (obj *ZeroEndpoint) SendConfig(enpCount int) {
-	cnt := strconv.Itoa(enpCount)
-	if obj.sendFeedbackCb != nil {
-		obj.sendFeedbackCb(fmt.Sprintf("d/%s/%s/conf", obj.ownerID, obj.id), cnt)
+func (obj *ZeroEndpoint) SendConfig(enpCount int) error {
+	if obj.sendFeedbackCb == nil {
+		return fmt.Errorf("ZeroEndpoint sendFeedbackCb not set")
 	}
+	err := obj.sendFeedbackCb(fmt.Sprintf("d/%s/%s/conf", obj.ownerID, obj.id), strconv.Itoa(enpCount))
+	if err != nil {
+		return fmt.Errorf("ZeroEndpoint, failed to send config: %s", err)
+	}
+	return nil
 }
