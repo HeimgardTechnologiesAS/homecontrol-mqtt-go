@@ -4,7 +4,7 @@ Alpha version
 
 On Off endpoint example
 
-```
+```go
 package main
 
 import (
