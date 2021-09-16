@@ -1,10 +1,3 @@
-# github.com/HomeControlAS/homecontrol-mqtt-go
-
-Alpha version
-
-On Off endpoint example
-
-```
 package main
 
 import (
@@ -34,7 +27,6 @@ func ep1StateChange(ep endpoints.Endpoint, cmd string, msg string, err error) {
 
 func main() {
 
-    // gw ip, mqtt device unique ID, gw username, gw pass, use secure TLS connection, custom name
 	mqttDevice, err := devices.NewMqttDevice("192.168.8.1", "test_dev12345", "hc", "admin", true, "mqtt_device")
 	if err != nil {
 		log.Printf("failed to create MQTT device: %s\n", err.Error())
@@ -68,4 +60,3 @@ func setSignalInterrupt(quitCh chan error) {
 		os.Exit(1)
 	}()
 }
-```
