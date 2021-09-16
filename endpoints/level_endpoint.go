@@ -2,7 +2,8 @@ package endpoints
 
 import (
 	"fmt"
-	c "homecontrol-mqtt-go/internal/pkg/commands"
+
+	c "github.com/HomeControlAS/homecontrol-mqtt-go/commands"
 )
 
 type LevelEndpoint struct {

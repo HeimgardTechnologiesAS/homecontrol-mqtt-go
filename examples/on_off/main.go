@@ -7,9 +7,9 @@ import (
 	"syscall"
 	"time"
 
-	"homecontrol-mqtt-go/internal/pkg/commands"
-	"homecontrol-mqtt-go/internal/pkg/devices"
-	"homecontrol-mqtt-go/internal/pkg/endpoints"
+	"github.com/HomeControlAS/homecontrol-mqtt-go/commands"
+	"github.com/HomeControlAS/homecontrol-mqtt-go/devices"
+	"github.com/HomeControlAS/homecontrol-mqtt-go/endpoints"
 )
 
 func ep1StateChange(ep endpoints.Endpoint, cmd string, msg string, err error) {

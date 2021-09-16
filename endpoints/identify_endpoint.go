@@ -1,7 +1,7 @@
 package endpoints
 
 import (
-	c "homecontrol-mqtt-go/internal/pkg/commands"
+	c "github.com/HomeControlAS/homecontrol-mqtt-go/commands"
 )
 
 type IdentifyEndpoint struct {

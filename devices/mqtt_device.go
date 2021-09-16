@@ -5,10 +5,11 @@ import (
 	"crypto/x509"
 	"errors"
 	"fmt"
-	"homecontrol-mqtt-go/internal/pkg/endpoints"
 	"net"
 	"strings"
 	"time"
+
+	"github.com/HomeControlAS/homecontrol-mqtt-go/endpoints"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 )
