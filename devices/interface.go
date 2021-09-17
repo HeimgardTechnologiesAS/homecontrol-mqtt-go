@@ -12,4 +12,6 @@ type Device interface {
 	RunForever(quitC chan error) error
 	// AddEndpoint adds new endpoint to MQTT Device
 	AddEndpoint(enp endpoints.Endpoint)
+	// GetEndpoint returns endpoint with given ID
+	GetEndpoint(uid string) endpoints.Endpoint
 }

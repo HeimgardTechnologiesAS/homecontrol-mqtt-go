@@ -27,6 +27,7 @@ func ep1StateChange(ep endpoints.Endpoint, cmd string, msg string, err error) {
 
 func main() {
 
+	log.Printf("starting")
 	mqttDevice, err := devices.NewMqttDevice("192.168.8.1", "test_dev12345", "hc", "admin", true, "mqtt_device")
 	if err != nil {
 		log.Printf("failed to create MQTT device: %s\n", err.Error())
@@ -41,6 +42,12 @@ func main() {
 		return
 	}
 	defer mqttDevice.Disconnect()
+
+	e := mqttDevice.GetEndpoint("ep1")
+
+	log.Printf("E1 %v", e)
+	log.Printf("E1 %v", mqttDevice.GetEndpoint("epds"))
+	log.Printf("E1 %v", mqttDevice.GetEndpoint("ep1"))
 
 	quitCh := make(chan error)
 	setSignalInterrupt(quitCh)

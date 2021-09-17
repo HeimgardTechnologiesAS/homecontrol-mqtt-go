@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/HomeControlAS/homecontrol-mqtt-go/endpoints"
@@ -27,6 +28,7 @@ type MqttDevice struct {
 	client    mqtt.Client
 	epZero    *endpoints.ZeroEndpoint
 	endpoints map[string]endpoints.Endpoint
+	enpMut    sync.RWMutex
 	quitC     chan error
 }
 
@@ -156,7 +158,15 @@ func (obj *MqttDevice) RunForever(quitC chan error) error {
 func (obj *MqttDevice) AddEndpoint(enp endpoints.Endpoint) {
 	enp.SetOwnerID(obj.uid)
 	enp.RegisterSendMsgCb(obj.sendMsg)
+	obj.enpMut.Lock()
+	defer obj.enpMut.Unlock()
 	obj.endpoints[enp.GetID()] = enp
+}
+
+func (obj *MqttDevice) GetEndpoint(uid string) endpoints.Endpoint {
+	obj.enpMut.RLock()
+	defer obj.enpMut.RUnlock()
+	return obj.endpoints[uid]
 }
 
 // SendConfigs sends config for each endpoint
