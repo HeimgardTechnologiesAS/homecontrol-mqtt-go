@@ -23,13 +23,14 @@ const (
 
 // MqttDevice struct that defines all method needed to connect and communicate with HC GW
 type MqttDevice struct {
-	uid       string
-	name      string
-	client    mqtt.Client
-	epZero    *endpoints.ZeroEndpoint
-	endpoints map[string]endpoints.Endpoint
-	enpMut    sync.RWMutex
-	quitC     chan error
+	uid                   string
+	name                  string
+	client                mqtt.Client
+	epZero                *endpoints.ZeroEndpoint
+	endpoints             map[string]endpoints.Endpoint
+	enpMut                sync.RWMutex
+	onConnectEvent        func()
+	onConnectionLostEvent func(err error)
 }
 
 // NewMqttDevice constructs Mqtt device
@@ -58,7 +59,7 @@ func NewMqttDevice(
 	opts.SetClientID(uid)
 	opts.SetUsername(username)
 	opts.SetPassword(password)
-	opts.SetWill(fmt.Sprintf("d/%s/0/online", uid), fmt.Sprintf("d/%s/0/offline", uid), 1, false)
+	opts.SetWill(fmt.Sprintf("d/%s/0/online", uid), "", 1, false)
 
 	opts.SetDefaultPublishHandler(device.onMessageHandler)
 	opts.OnConnect = device.onConnectHandler
@@ -142,16 +143,7 @@ func (obj *MqttDevice) Connect() error {
 // Disconnect disconnects Device from HC gateway
 func (obj *MqttDevice) Disconnect() {
 	obj.sendMsg(fmt.Sprintf("d/%s/0/offline", obj.uid), "")
-	obj.client.Disconnect(250)
-}
-
-// RunForever runs infinite loop if MQTT Device should listen forever
-func (obj *MqttDevice) RunForever(quitC chan error) error {
-	obj.quitC = quitC
-	for {
-		err := <-quitC
-		return err
-	}
+	obj.client.Disconnect(1000)
 }
 
 // AddEndpoint adds new endpoint to MQTT Device
@@ -253,14 +245,26 @@ func (obj *MqttDevice) onMessageHandler(client mqtt.Client, msg mqtt.Message) {
 
 // onConnectHandler handles MQTT connect event
 func (obj *MqttDevice) onConnectHandler(client mqtt.Client) {
-	// do nothing
+	if obj.onConnectEvent != nil {
+		obj.onConnectEvent()
+	}
 }
 
 // onConnectionLostHandler handles MQTT connection lost event
 func (obj *MqttDevice) connectionLostHandler(client mqtt.Client, err error) {
-	if obj.quitC != nil {
-		obj.quitC <- fmt.Errorf("client with ID %s lost connection. Error: %s", obj.uid, err.Error())
+	if obj.onConnectionLostEvent != nil {
+		obj.onConnectionLostEvent(err)
 	}
+}
+
+// RegisterOnConnectCb registers external handler that is invoked when mqtt device is connected
+func (obj *MqttDevice) RegisterOnConnectCb(cb func()) {
+	obj.onConnectEvent = cb
+}
+
+// RegisterOnConnectionLostCb register external handler that is invoked when connection is lost
+func (obj *MqttDevice) RegisterOnConnectionLostCb(cb func(err error)) {
+	obj.onConnectionLostEvent = cb
 }
 
 // parseEndpointID helper method to parse endpoint id from incoming message

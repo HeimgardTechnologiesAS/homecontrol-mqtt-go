@@ -8,10 +8,12 @@ type Device interface {
 	Connect() error
 	// Disconnect disconnects Device from HC gateway
 	Disconnect()
-	// RunForever runs infinite loop if MQTT Device should listen forever
-	RunForever(quitC chan error) error
 	// AddEndpoint adds new endpoint to MQTT Device
 	AddEndpoint(enp endpoints.Endpoint)
 	// GetEndpoint returns endpoint with given ID
 	GetEndpoint(uid string) endpoints.Endpoint
+	// RegisterOnConnectCb registers handler that is invoked when the connection is established
+	RegisterOnConnectCb(cb func())
+	// RegisterOnConnectionLostCb registers handler that is invoked when connection is lost
+	RegisterOnConnectionLostCb(cb func(err error))
 }

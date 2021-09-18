@@ -2,14 +2,11 @@ package main
 
 import (
 	"log"
-	"os"
-	"os/signal"
-	"syscall"
-	"time"
 
 	"github.com/HomeControlAS/homecontrol-mqtt-go/commands"
 	"github.com/HomeControlAS/homecontrol-mqtt-go/devices"
 	"github.com/HomeControlAS/homecontrol-mqtt-go/endpoints"
+	"github.com/HomeControlAS/homecontrol-mqtt-go/utils"
 )
 
 func ep1StateChange(ep endpoints.Endpoint, cmd string, msg string, err error) {
@@ -25,10 +22,15 @@ func ep1StateChange(ep endpoints.Endpoint, cmd string, msg string, err error) {
 	}
 }
 
+func onConnectionLostEvent(err error) {
+	log.Printf("Event, Connection lost %s", err)
+	utils.TriggerSignalInterrupt()
+}
+
 func main() {
 
-	log.Printf("starting")
-	mqttDevice, err := devices.NewMqttDevice("192.168.8.1", "test_dev12345", "hc", "admin", true, "mqtt_device")
+	mqttDevice, err := devices.NewMqttDevice("192.168.8.1", "newDev1", "hc", "admin", true, "mqtt_device")
+	mqttDevice.RegisterOnConnectionLostCb(onConnectionLostEvent)
 	if err != nil {
 		log.Printf("failed to create MQTT device: %s\n", err.Error())
 		return
@@ -42,28 +44,5 @@ func main() {
 		return
 	}
 	defer mqttDevice.Disconnect()
-
-	e := mqttDevice.GetEndpoint("ep1")
-
-	log.Printf("E1 %v", e)
-	log.Printf("E1 %v", mqttDevice.GetEndpoint("epds"))
-	log.Printf("E1 %v", mqttDevice.GetEndpoint("ep1"))
-
-	quitCh := make(chan error)
-	setSignalInterrupt(quitCh)
-	err = mqttDevice.RunForever(quitCh)
-	if err != nil {
-		log.Printf("Device stopped unexpectedly. %s", err.Error())
-	}
-}
-
-func setSignalInterrupt(quitCh chan error) {
-	c := make(chan os.Signal)
-	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
-	go func() {
-		<-c
-		quitCh <- nil
-		time.Sleep(time.Second * 2)
-		os.Exit(1)
-	}()
+	utils.WaitForSignalInterrupt()
 }
