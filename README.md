@@ -1,8 +1,12 @@
-# github.com/HomeControlAS/homecontrol-mqtt-go
+# homecontrol-mqtt-go
 
-Alpha version
+### Setup
+`go get github.com/HomeControlAS/homecontrol-mqtt-go`
 
-On Off endpoint example
+
+Currently in beta test phase
+
+On/Off device example 
 
 ```go
 package main
@@ -54,3 +58,4 @@ func main() {
 	utils.WaitForSignalInterrupt()
 }
 ```
+
