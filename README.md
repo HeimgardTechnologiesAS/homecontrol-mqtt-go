@@ -9,7 +9,7 @@ or
 * open directory in vscode and docker devcontainer
 * go to examples
 * modify GW IP and MQTT credentials
-* in the `main.go` directory run `go run .`
+* in the examples directory where `main.go` is placed run `go run .`
 
 
 Currently in beta test phase
