@@ -3,7 +3,7 @@ package endpoints
 import (
 	"fmt"
 
-	c "github.com/HomeControlAS/homecontrol-mqtt-go/commands"
+	c "github.com/HomeControlAS/homecontrol-mqtt-go/pkg/commands"
 )
 
 // endpoint struct should be embedded to all child endpoints.

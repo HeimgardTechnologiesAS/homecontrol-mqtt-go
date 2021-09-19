@@ -1,6 +1,6 @@
 package devices
 
-import "github.com/HomeControlAS/homecontrol-mqtt-go/endpoints"
+import "github.com/HomeControlAS/homecontrol-mqtt-go/pkg/endpoints"
 
 // Device interface that collects methods needed to connect MQTT device to HC Gateway
 type Device interface {

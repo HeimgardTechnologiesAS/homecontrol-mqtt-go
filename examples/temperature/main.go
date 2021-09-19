@@ -5,10 +5,10 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/HomeControlAS/homecontrol-mqtt-go/commands"
-	"github.com/HomeControlAS/homecontrol-mqtt-go/devices"
-	"github.com/HomeControlAS/homecontrol-mqtt-go/endpoints"
-	"github.com/HomeControlAS/homecontrol-mqtt-go/utils"
+	"github.com/HomeControlAS/homecontrol-mqtt-go/pkg/commands"
+	"github.com/HomeControlAS/homecontrol-mqtt-go/pkg/devices"
+	"github.com/HomeControlAS/homecontrol-mqtt-go/pkg/endpoints"
+	"github.com/HomeControlAS/homecontrol-mqtt-go/pkg/utils"
 )
 
 var fakeTemperature = 0

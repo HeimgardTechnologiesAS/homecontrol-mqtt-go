@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/HomeControlAS/homecontrol-mqtt-go/endpoints"
+	"github.com/HomeControlAS/homecontrol-mqtt-go/pkg/endpoints"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 )

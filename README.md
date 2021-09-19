@@ -14,10 +14,10 @@ package main
 import (
 	"log"
 
-	"github.com/HomeControlAS/homecontrol-mqtt-go/commands"
-	"github.com/HomeControlAS/homecontrol-mqtt-go/devices"
-	"github.com/HomeControlAS/homecontrol-mqtt-go/endpoints"
-	"github.com/HomeControlAS/homecontrol-mqtt-go/utils"
+	"github.com/HomeControlAS/homecontrol-mqtt-go/pkg/commands"
+	"github.com/HomeControlAS/homecontrol-mqtt-go/pkg/devices"
+	"github.com/HomeControlAS/homecontrol-mqtt-go/pkg/endpoints"
+	"github.com/HomeControlAS/homecontrol-mqtt-go/pkg/utils"
 )
 
 func ep1StateChange(ep endpoints.Endpoint, cmd string, msg string, err error) {

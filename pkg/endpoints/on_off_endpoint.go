@@ -3,21 +3,21 @@ package endpoints
 import (
 	"fmt"
 
-	c "github.com/HomeControlAS/homecontrol-mqtt-go/commands"
+	c "github.com/HomeControlAS/homecontrol-mqtt-go/pkg/commands"
 )
 
-type LevelEndpoint struct {
+type OnOffEndpoint struct {
 	*endpoint
 }
 
-func NewLevelEndpoint(
+func NewOnOffEndpoint(
 	epId string,
 	epName string,
 	onStateChange func(ep Endpoint, cmd string, state string, err error),
-) *LevelEndpoint {
-	return &LevelEndpoint{
+) *OnOffEndpoint {
+	return &OnOffEndpoint{
 		endpoint: newEndpoint(
-			"lev",
+			"pwr",
 			"60",
 			epId,
 			epName,
@@ -25,20 +25,14 @@ func NewLevelEndpoint(
 			map[string]c.Command{
 				c.CP: c.NewCommand(c.CP),
 				c.SP: c.NewCommand(c.SP),
-				c.CL: c.NewCommand(c.CL),
-				c.SL: c.NewCommand(c.SL),
 			}),
 	}
 }
 
-func (obj *LevelEndpoint) SendStatus() error {
+func (obj *OnOffEndpoint) SendStatus() error {
 	err := obj.SendFeedbackMessage(c.SP, obj.commands[c.SP].GetState())
 	if err != nil {
 		return fmt.Errorf("endpoint [%s], failed to send SP feedback: %s", obj.GetID(), err)
-	}
-	err = obj.SendFeedbackMessage(c.SL, obj.commands[c.SL].GetState())
-	if err != nil {
-		return fmt.Errorf("endpoint [%s], failed to send SL feedback: %s", obj.GetID(), err)
 	}
 	return nil
 }
