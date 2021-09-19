@@ -1,7 +1,15 @@
 # homecontrol-mqtt-go
 
 ### Setup
-`go get github.com/HomeControlAS/homecontrol-mqtt-go`
+use `go get github.com/HomeControlAS/homecontrol-mqtt-go`
+
+or 
+
+* clone the git repo
+* open directory in vscode and docker devcontainer
+* go to examples
+* modify GW IP and MQTT credentials
+* in the `main.go` directory run `go run .`
 
 
 Currently in beta test phase
