@@ -49,11 +49,12 @@ func onConnectionLostEvent(err error) {
 func main() {
 
 	mqttDevice, err := devices.NewMqttDevice("192.168.8.1", "newDev1", "hc", "admin", true, "mqtt_device")
-	mqttDevice.RegisterOnConnectionLostCb(onConnectionLostEvent)
 	if err != nil {
 		log.Printf("failed to create MQTT device: %s\n", err.Error())
 		return
 	}
+	
+	mqttDevice.RegisterOnConnectionLostCb(onConnectionLostEvent)
 
 	mqttDevice.AddEndpoint(endpoints.NewOnOffEndpoint("ep1", "On_Off", ep1StateChange))
 
