@@ -59,7 +59,7 @@ func NewMqttDevice(
 	opts.SetClientID(uid)
 	opts.SetUsername(username)
 	opts.SetPassword(password)
-	opts.SetWill(fmt.Sprintf("d/%s/0/online", uid), "", 1, false)
+	opts.SetWill(fmt.Sprintf("d/%s/0/online", uid), fmt.Sprintf("d/%s/0/offline", uid), 1, false)
 
 	opts.SetDefaultPublishHandler(device.onMessageHandler)
 	opts.OnConnect = device.onConnectHandler
